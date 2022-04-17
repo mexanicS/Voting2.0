@@ -4,6 +4,8 @@ pragma solidity >=0.4.22 <0.9.0;
 contract Voting {
   address public owner;
 
+  Voting[] public voting;
+
   constructor()  {
     owner = msg.sender;
   }
