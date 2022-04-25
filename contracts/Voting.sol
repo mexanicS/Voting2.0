@@ -76,22 +76,26 @@ contract Voting {
   }
 
   function addCandidate (uint256 _votingId, string calldata _name, address payable _candidateAddress) public {
-    require(votings[_votingId].status==VotingStatus.NOT_ACTIVE,"Voting is ACTIVE");
-    //require(votings[_votingId].endTimeOfVoting >= block.timestamp,"Start voting first.");
+    require(votings[_votingId].status==VotingStatus.NOT_ACTIVE,"Voting is ACTIVE or COMPLETED");
     for (uint256 i = 0; i < votings[_votingId].totalCandidate; i++) {
       if(_candidateAddress == candidate[_votingId][i].candidateAddress){
         revert("The address already exists");
       }
     }
-    candidate[_votingId][votings[_votingId].totalCandidate].name = _name;
-    candidate[_votingId][votings[_votingId].totalCandidate].candidateAddress = _candidateAddress;
+
+    Candidate memory newCandidate = Candidate({
+      name: _name,
+      candidateAddress: _candidateAddress,
+      totalCandidateVotes: 0
+    });
+
+    candidate[_votingId].push(newCandidate);
 
     votings[_votingId].totalCandidate++;
   }
 
   function Vote(uint256 _votingId, uint256 _numberCandidate) payable public {
     require(votings[_votingId].totalCandidate >= _votingId, "Voting does not exist");
-    //Election storage election = _election[electionId];
     require(votings[_votingId].endTimeOfVoting >= block.timestamp,"The voting is over");
     require(!electorates[_votingId][msg.sender].isVoted,"Have you already voted");
     require(msg.value >= .01 ether,"Insufficient funds for voting" );
@@ -133,18 +137,29 @@ contract Voting {
     _to.transfer(comission);
     emit Withdraw(_to, comission);
     comission = 0;
-    
   }
 
   function infVoting(uint256 _votingId) public view returns (Votings memory _votings) {
     return votings[_votingId];
   }
 
-  function infCandidate (uint256 _votingId, uint256 _numberCandidate) external view returns (Candidate memory _candidate){
+  function infCandidate (uint256 _votingId, uint256 _numberCandidate) external view returns (Candidate memory _candidates) {
     return candidate[_votingId][_numberCandidate];
   }
 
-  
+  function infElectorate(uint256 _votingsId, address _electorate) external view returns(Electorate memory _electorates) {
+    return electorates[_votingsId][_electorate];
+  }
 
+  function infTimeLeft (uint256 _votingsId) public view returns(uint256) {
+    return votings[_votingsId].endTimeOfVoting - block.timestamp;
+  }
 
+  function listCandidate(uint256 _votingsId) external view returns(string[] memory) {
+    string[] memory currentArrayCandidate = new string[](votings[_votingsId].totalCandidate);
+    for (uint256 i = 0; i < votings[_votingsId].totalCandidate; i++) {
+      currentArrayCandidate[i] = candidate[_votingsId][i].name;
+    }
+    return currentArrayCandidate;
+  }
 }
