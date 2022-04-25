@@ -5,9 +5,11 @@ contract Voting {
   address public owner;
   uint constant timeToVote = 3 days;
   Votings[] public votings;
-  Candidate[][] public candidate;
+  mapping(uint256 => mapping(uint256 => Candidate)) public candidate;
 
   event VotingCreated(uint256 index);
+  event AddCandidate(uint256 index);
+
   constructor()  {
     owner = msg.sender;
   }
@@ -61,34 +63,32 @@ contract Voting {
   }
 
   function startVoting(uint256 _votingId)  external requireOwner{
+    require(votings[_votingId].status==VotingStatus.NOT_ACTIVE,"Voting is not ACTIVE");
     votings[_votingId].endTimeOfVoting = block.timestamp + timeToVote;
     votings[_votingId].status = VotingStatus.ACTIVE;
   }
 
   function addCandidate (uint256 _votingId, string calldata _name, address payable _candidateAddress) public {
-    require(votings[_votingId].status==VotingStatus.ACTIVE,"Voting is not ACTIVE");
-    require(votings[_votingId].endTimeOfVoting >= block.timestamp,"Start voting first.");
-    for (uint256 i = 0; i < candidate.length; i++) {
+    require(votings[_votingId].status==VotingStatus.NOT_ACTIVE,"Voting is not ACTIVE");
+    //require(votings[_votingId].endTimeOfVoting >= block.timestamp,"Start voting first.");
+    for (uint256 i = 0; i < votings[_votingId].totalCandidate; i++) {
       if(_candidateAddress == candidate[_votingId][i].candidateAddress){
         revert("The address already exists");
       }
     }
-    Candidate memory newCandidate = Candidate({
-      name: _name,
-      candidateAddress: payable(_candidateAddress),
-      totalCandidateVotes: 0
-    });
+    candidate[_votingId][votings[_votingId].totalCandidate].name = _name;
+    candidate[_votingId][votings[_votingId].totalCandidate].candidateAddress = _candidateAddress;
 
-    candidate[votings[_votingId].totalCandidate].push(newCandidate);
 
-    //votings[_votingId].listCandidate[votings.totalCandidate].
+    votings[_votingId].totalCandidate++;
+    //emit AddCandidate(candidate[_votingId].length);
   }
 
   function infVoting(uint256 _votingId) public view returns (Votings memory _votings) {
     return votings[_votingId];
   }
 
-  function infCandidate (uint256 _votingId, uint256 _numberCandidate) external view returns (Candidate memory _candidates){
+  function infCandidate (uint256 _votingId, uint256 _numberCandidate) external view returns (Candidate memory _candidate){
     return candidate[_votingId][_numberCandidate];
   }
 }
