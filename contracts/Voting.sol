@@ -70,7 +70,7 @@ contract Voting {
   }
 
   function startVoting(uint256 _votingId)  external requireOwner{
-    require(votings[_votingId].status==VotingStatus.NOT_ACTIVE,"Voting is not ACTIVE");
+    require(votings[_votingId].status==VotingStatus.NOT_ACTIVE,"Voting is ACTIVE or COMPLETED");
     votings[_votingId].endTimeOfVoting = block.timestamp + timeToVote;
     votings[_votingId].status = VotingStatus.ACTIVE;
   }
