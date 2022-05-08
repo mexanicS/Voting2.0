@@ -35,24 +35,26 @@ describe("Voting", function () {
         return new Promise(resolve => setTimeout(resolve,ms))
     }
     describe("createVoting",function(){
-        it("createElection correctly", async function(){ 
-            const tx = await voting.createVoting("testVoting")
+        it("createVoting correctly", async function(){ 
+            const txCreateVoting = await voting.createVoting("testVoting")
             const cVoting = await voting.votings(0)
       
             expect(cVoting.description).to.eq("testVoting")
       
-            const ts =  await getTimeStamp(tx.blockNumber)
+            const ts =  await getTimeStamp(txCreateVoting.blockNumber)
 
             let endTimeFactsString = totalTime+ts
             endTimeFactsString = endTimeFactsString.toString()
            
             expect(cVoting.endTimeOfVoting).to.eq(0)
             expect(cVoting.status).to.eq(0)
-            expect(cVoting.totalVotingVotes.toString()).to.eq(zero.toString())
-            expect(cVoting.totalCandidate.toString()).to.eq(zero.toString())
-            expect(cVoting.deposit.toString()).to.eq(zero.toString())
-            //array test
-            //emit test
+            expect(cVoting.totalVotingVotes).to.eq(zero)
+            expect(cVoting.totalCandidate).to.eq(zero)
+            expect(cVoting.deposit).to.eq(zero)
+
+            await expect(txCreateVoting)
+                .to.emit(voting, 'VotingCreated')
+                .withArgs(0, ts);
         })
     })
 
@@ -68,8 +70,43 @@ describe("Voting", function () {
             let endTimeFactsString = totalTime+ts
             
             endTimeFactsString = endTimeFactsString.toString()
-             expect((endTimeString-1).toString()).to.eq(endTimeFactsString)
+            expect((endTimeString-1).toString()).to.eq(endTimeFactsString)
             expect(cVoting.status).to.eq(1)
+            
+            await expect(voting.startVoting(0))
+                .to.be.revertedWith('Voting is ACTIVE or COMPLETED');
+        })    
+    })
+
+    describe("addCandidate",function(){
+        it("addCandidate correctly", async function(){
+            await voting.createVoting("testVoting")
+            
+            
+
+            const txAddCandidate = await voting.addCandidate(0,"Mentos Petrovich", acc1.address)
+
+            let cCandidate = await voting.candidate(0,0)
+            let cVoting = await voting.votings(0)
+            
+            
+            expect(cCandidate.name).to.eq("Mentos Petrovich")
+            expect(cCandidate.candidateAddress).to.eq(acc1.address)
+            expect(cCandidate.totalCandidateVotes).to.eq(zero)
+
+            expect(cVoting.totalCandidate).to.eq(1)
+
+            await expect(txAddCandidate)
+                .to.emit(voting, 'AddCandidate')
+                .withArgs(0, "Mentos Petrovich");
+
+            
+
+            await voting.startVoting(0)
+
+            await expect(voting.addCandidate(0,"Mentos Petrovich", acc1.address))
+                .to.be.revertedWith('Voting is ACTIVE or COMPLETED');
+
         })    
     })
 })

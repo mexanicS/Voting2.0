@@ -12,8 +12,8 @@ contract Voting {
   mapping(uint256 => Candidate[]) public candidate;
   mapping(uint256 => mapping(address => Electorate)) public electorates;
 
-  event VotingCreated(uint256 index);
-  event AddCandidate(uint256 index);
+  event VotingCreated(uint256 index, uint time);
+  event AddCandidate(uint256 index, string name);
   event Voted(uint indexed id, address indexed voter);
   event VotingsFinished(uint256 indexed id,address indexed winCandidate);
   event Withdraw(address indexed account, uint256 amount);
@@ -65,7 +65,7 @@ contract Voting {
 
     votings.push(newVoting);
 
-    emit VotingCreated(votings.length -1);
+    emit VotingCreated(votings.length -1, block.timestamp);
     return votings.length -1;
   }
 
@@ -92,13 +92,14 @@ contract Voting {
     candidate[_votingId].push(newCandidate);
 
     votings[_votingId].totalCandidate++;
+    emit AddCandidate(candidate[_votingId].length -1, _name);
   }
 
   function Vote(uint256 _votingId, uint256 _numberCandidate) payable public {
     require(votings[_votingId].totalCandidate >= _votingId, "Voting does not exist");
     require(votings[_votingId].endTimeOfVoting >= block.timestamp,"The voting is over");
     require(!electorates[_votingId][msg.sender].isVoted,"Have you already voted");
-    require(msg.value >= .01 ether,"Insufficient funds for voting" );
+    require(msg.value >= .01 ether,"Insufficient funds for voting");
 
     votings[_votingId].totalVotingVotes++;
     votings[_votingId].deposit += msg.value;
