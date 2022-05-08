@@ -96,7 +96,9 @@ contract Voting {
   }
 
   function Vote(uint256 _votingId, uint256 _numberCandidate) payable public {
-    require(votings[_votingId].totalCandidate >= _votingId, "Voting does not exist");
+    require(_votingId <= votings.length, "Voting does not exist");
+    require(votings[_votingId].status==VotingStatus.ACTIVE,"Voting is NOT_ACTIVE or COMPLETED");
+    require(votings[_votingId].totalCandidate > _numberCandidate, "There is no candidate");
     require(votings[_votingId].endTimeOfVoting >= block.timestamp,"The voting is over");
     require(!electorates[_votingId][msg.sender].isVoted,"Have you already voted");
     require(msg.value >= .01 ether,"Insufficient funds for voting");
@@ -113,8 +115,7 @@ contract Voting {
   }
 
   function finishVoting(uint256 _votingId) public {
-    require(votings[_votingId].status == VotingStatus.ACTIVE,"Voting is still underway.");
-    require(votings[_votingId].endTimeOfVoting <= block.timestamp,"Voting is active.");
+    require(votings[_votingId].endTimeOfVoting <= block.timestamp,"Voting is active");
 
     for (uint256 i = 0; i <votings[_votingId].totalCandidate; i++) {
       if(candidate[_votingId][i].totalCandidateVotes > maxVotes){
@@ -154,6 +155,7 @@ contract Voting {
 
   function infTimeLeft (uint256 _votingsId) public view returns(uint256) {
     return votings[_votingsId].endTimeOfVoting - block.timestamp;
+    //когда 0 выводить что окончено
   }
 
   function listCandidate(uint256 _votingsId) external view returns(string[] memory) {
