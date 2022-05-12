@@ -149,19 +149,19 @@ contract Voting {
     return candidate[_votingId][_numberCandidate];
   }
 
-  function infElectorate(uint256 _votingsId, address _electorate) external view returns(Electorate memory _electorates) {
-    return electorates[_votingsId][_electorate];
+  function infElectorate(uint256 _votingId, address _electorate) external view returns(Electorate memory _electorates) {
+    return electorates[_votingId][_electorate];
   }
 
-  function infTimeLeft (uint256 _votingsId) public view returns(uint256) {
-    return votings[_votingsId].endTimeOfVoting - block.timestamp;
-    //когда 0 выводить что окончено
+  function infTimeLeft (uint256 _votingId) public view returns(uint256) {
+    require(votings[_votingId].endTimeOfVoting >= block.timestamp,"The voting is over");
+    return votings[_votingId].endTimeOfVoting - block.timestamp;
   }
 
-  function listCandidate(uint256 _votingsId) external view returns(string[] memory) {
-    string[] memory currentArrayCandidate = new string[](votings[_votingsId].totalCandidate);
-    for (uint256 i = 0; i < votings[_votingsId].totalCandidate; i++) {
-      currentArrayCandidate[i] = candidate[_votingsId][i].name;
+  function listCandidate(uint256 _votingId) external view returns(string[] memory) {
+    string[] memory currentArrayCandidate = new string[](votings[_votingId].totalCandidate);
+    for (uint256 i = 0; i < votings[_votingId].totalCandidate; i++) {
+      currentArrayCandidate[i] = candidate[_votingId][i].name;
     }
     return currentArrayCandidate;
   }
